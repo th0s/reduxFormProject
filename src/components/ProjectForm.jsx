@@ -3,7 +3,6 @@ import { connect } from "react-redux";
 import actions from "../actions/formActions";
 import axios from "axios";
 
-
 class ProjectForm extends Component {
   constructor(props) {
     super(props);
@@ -35,21 +34,29 @@ class ProjectForm extends Component {
 
   onClick(e) {
     const { currentProject, currentRole, currentUser } = this.state;
-    console.log(this.state);
-    this.props.syncCurrent.map(project => {
-      if (JSON.stringify(project) === JSON.stringify()) {
-        console.log("Match found! Cannot add!");
-        return;
-      }
-    });
+    console.log(this.state, "<<<< ------- is state");
 
+    for (let project = 0; project < this.props.syncCurrent.length; project++) {
+      console.log(project, "<<< ----- is project");
+      if (
+        JSON.stringify(this.props.syncCurrent[project]) ===
+        JSON.stringify({
+          project: currentProject,
+          role: currentRole,
+          user: currentUser
+        })
+      ) {
+        console.log("Duplication error");
+        console.log(this.props);
+        return true;
+      }
+      console.log("Success");
+    }
     this.props.userAssignment({
       project: currentProject,
       role: currentRole,
       user: currentUser
     });
-
-    this.test(e);
   }
 
   componentWillMount() {
@@ -101,12 +108,7 @@ class ProjectForm extends Component {
               this.onClick(e);
             }}
           />
-          <div
-            id="status-btn"
-            onClick={e => {
-              this.onClick(e);
-            }}
-          />
+          <div id="status-btn" />
         </form>
       </div>
     );
