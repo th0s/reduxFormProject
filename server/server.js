@@ -3,6 +3,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -21,8 +23,14 @@ app.listen(3001, () => {
   console.log("Listening on port 1337");
 });
 
-app.get("/userAssignments", (req, res) => {
-  res.send(JSON.stringify("test"));
+app.post("/userAssignments", (req, res) => {
+  if (req.body.state.serverMsg === "Success!") {
+    res.send("200");
+  } else if (req.body.state.serverMsg === "Server Waiting for input...") {
+    res.send("0");
+  } else {
+    res.send("404");
+  }
 });
 
 // Exporting app for testing purposes.

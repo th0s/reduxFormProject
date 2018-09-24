@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import actions from "../actions/formActions";
+import formActions from "../actions/formActions";
 import axios from "axios";
 
 class ProjectForm extends Component {
@@ -10,59 +10,74 @@ class ProjectForm extends Component {
     this.state = {
       currentProject: "",
       currentRole: "",
-      currentUser: ""
+      currentUser: "",
+      serverStatus: 0,
+      serverMsg: "Server Waiting for input..."
     };
   }
 
+  // Split functions populate menus
+
   projectSplit(key) {
-    return this.props.syncProjects.map(project => {
+    return this.props.allProjects.map(project => {
       return <option key={key}>{project.name}</option>;
     });
   }
 
   roleSplit(key) {
-    return this.props.syncRoles.map(role => {
+    return this.props.allRoles.map(role => {
       return <option key={key}>{role.name}</option>;
     });
   }
 
   userSplit(key) {
-    return this.props.syncUsers.map(user => {
+    return this.props.allUsers.map(user => {
       return <option key={key}>{user.name}</option>;
     });
   }
 
   onClick(e) {
     const { currentProject, currentRole, currentUser } = this.state;
-    console.log(this.state, "<<<< ------- is state");
 
-    for (let project = 0; project < this.props.syncCurrent.length; project++) {
-      console.log(project, "<<< ----- is project");
+    //Checking current selection against Redux state for Duplication Issues
+    for (
+      let project = 0;
+      project < this.props.allUserAssignments.length;
+      project++
+    ) {
       if (
-        JSON.stringify(this.props.syncCurrent[project]) ===
+        JSON.stringify(this.props.allUserAssignments[project]) ===
         JSON.stringify({
           project: currentProject,
           role: currentRole,
           user: currentUser
         })
       ) {
-        console.log("Duplication error");
-        console.log(this.props);
+        this.setState({
+          serverStatus: 404,
+          serverMsg: "User/Role Already Assigned"
+        });
         return true;
       }
-      console.log("Success");
     }
-    this.props.userAssignment({
+    this.props.addUserAssignment({
       project: currentProject,
       role: currentRole,
       user: currentUser
     });
+    this.setState({
+      serverStatus: this.requestServerStatus(this.state.serverMsg),
+      serverMsg: "Success!"
+    });
   }
 
-  componentWillMount() {
-    // TODO: Finish fetch request
-    axios.get("http://localhost:3001/userAssignments").then(result => {
-      console.log(result.data, "<<< ----- API response");
+  requestServerStatus(serverMsg) {
+    axios({
+      method: "post",
+      url: "http://localhost:3001/userAssignments",
+      data: {
+        state: this.state
+      }
     });
   }
 
@@ -73,18 +88,14 @@ class ProjectForm extends Component {
           <h1>Assign User Projects</h1>
           <select
             id="project-nav"
-            onChange={e => {
-              this.setState({ currentProject: e.target.value });
-            }}
+            onChange={e => this.setState({ currentProject: e.target.value })}
           >
             <option value="">Projects</option>
             {this.projectSplit()}
           </select>
           <select
             id="user-nav"
-            onChange={e => {
-              this.setState({ currentUser: e.target.value });
-            }}
+            onChange={e => this.setState({ currentUser: e.target.value })}
             disabled={this.state.currentProject === ""}
           >
             <option value="">User</option>
@@ -92,9 +103,7 @@ class ProjectForm extends Component {
           </select>
           <select
             id="role-nav"
-            onChange={e => {
-              this.setState({ currentRole: e.target.value });
-            }}
+            onChange={e => this.setState({ currentRole: e.target.value })}
             disabled={this.state.currentUser === ""}
           >
             <option value="">Role</option>
@@ -104,11 +113,9 @@ class ProjectForm extends Component {
             id="save-btn"
             type="button"
             value="Save"
-            onClick={e => {
-              this.onClick(e);
-            }}
+            onClick={e => this.onClick(e)}
           />
-          <div id="status-btn" />
+          <p>{this.state.serverMsg}</p>
         </form>
       </div>
     );
@@ -116,16 +123,15 @@ class ProjectForm extends Component {
 }
 
 const mapStateToProps = state => {
-  console.log(state, "< ----- is state");
   return {
-    syncProjects: state.forms.projects,
-    syncRoles: state.forms.roles,
-    syncUsers: state.forms.users,
-    syncCurrent: state.forms.userAssignments
+    allProjects: state.forms.projects,
+    allRoles: state.forms.roles,
+    allUsers: state.forms.users,
+    allUserAssignments: state.forms.userAssignments
   };
 };
 
 export default connect(
   mapStateToProps,
-  { userAssignment: actions.addUserAssignment }
+  { addUserAssignment: formActions.addUserAssignment }
 )(ProjectForm);
