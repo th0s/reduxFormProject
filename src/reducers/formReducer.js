@@ -10,7 +10,7 @@ export default function (state = initialState, action) {
   switch (action.type) {
     case "ADD_USER_ASSIGNMENT":
       state.userAssignments = [...state.userAssignments, action.payload]
-      return {...state}
+      return { ...state }
 
     default:
       return state
